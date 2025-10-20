@@ -4,10 +4,7 @@
 
 import { Invitation } from "../../../../lib/api/invitation.js";
 import { IncomingRequestMessage } from "../../../../lib/core/messages/incoming-request-message.js";
-import {
-  handleAutoAnswer,
-  shouldAutoAnswer
-} from "../../../../lib/api/broadsoft/auto-answer.js";
+import { handleAutoAnswer, shouldAutoAnswer } from "../../../../lib/api/broadsoft/auto-answer.js";
 import { AutoAnswerOptions } from "../../../../lib/api/broadsoft/types.js";
 
 describe("BroadSoft Auto-Answer", () => {
@@ -32,7 +29,7 @@ describe("BroadSoft Auto-Answer", () => {
         request: {
           getHeaders: (name: string) => {
             if (name === "call-info") {
-              return ["<sip:example.com>; purpose=\"icon\""];
+              return ['<sip:example.com>; purpose="icon"'];
             }
             return [];
           }
@@ -45,7 +42,7 @@ describe("BroadSoft Auto-Answer", () => {
     it("should return false when no Call-Info headers", () => {
       const mockInvitation = {
         request: {
-          getHeaders: (name: string) => []
+          getHeaders: () => []
         } as unknown as IncomingRequestMessage
       } as Invitation;
 
@@ -88,7 +85,7 @@ describe("BroadSoft Auto-Answer", () => {
         request: {
           getHeaders: (name: string) => {
             if (name === "call-info") {
-              return ["<sip:example.com>; purpose=\"icon\""];
+              return ['<sip:example.com>; purpose="icon"'];
             }
             return [];
           }
@@ -105,7 +102,7 @@ describe("BroadSoft Auto-Answer", () => {
     });
 
     it("should schedule auto-answer with correct delay", (done) => {
-      let acceptCalled = false;
+      const acceptCalled = false;
       const mockInvitation = {
         request: {
           getHeaders: (name: string) => {
@@ -131,11 +128,17 @@ describe("BroadSoft Auto-Answer", () => {
       // Advance time by 2 seconds
       jasmine.clock().tick(2000);
 
-      // Need to wait for next tick for promise to resolve
+      // Tick once more to execute the promise microtask
+      jasmine.clock().tick(1);
+
+      // Wait for next tick to verify
       setTimeout(() => {
         expect(mockInvitation.accept).toHaveBeenCalled();
         done();
       }, 0);
+
+      // Tick to execute the setTimeout
+      jasmine.clock().tick(1);
     });
 
     it("should call onBeforeAutoAnswer callback", () => {
@@ -188,10 +191,16 @@ describe("BroadSoft Auto-Answer", () => {
       // Answer after=0 means immediate
       jasmine.clock().tick(0);
 
-      setTimeout(() => {
-        expect(afterCallback).toHaveBeenCalled();
-        done();
-      }, 10);
+      // Use a microtask to wait for the promise chain to complete
+      Promise.resolve()
+        .then(() => Promise.resolve())
+        .then(() => {
+          expect(afterCallback).toHaveBeenCalled();
+          done();
+        });
+
+      // Tick to execute promise microtasks
+      jasmine.clock().tick(1);
     });
 
     it("should use delayOverride when provided", () => {
@@ -243,10 +252,16 @@ describe("BroadSoft Auto-Answer", () => {
 
       jasmine.clock().tick(0);
 
+      // Tick once more to execute the promise microtask
+      jasmine.clock().tick(1);
+
       setTimeout(() => {
         expect(mockInvitation.accept).not.toHaveBeenCalled();
         done();
       }, 10);
+
+      // Tick to execute the setTimeout
+      jasmine.clock().tick(11);
     });
   });
 });

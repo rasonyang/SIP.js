@@ -28,10 +28,11 @@ export function parseCallInfoHeader(headerValue: string): CallInfoHeader | undef
   }
 
   const uri = uriMatch[1];
-  const params: { [key: string]: string | number } = {};
+  const params: { [key: string]: string | number | boolean } = {};
 
   // Extract parameters after the URI
-  const paramsString = headerValue.substring(uriMatch.index! + uriMatch[0].length);
+  const matchIndex = uriMatch.index !== undefined ? uriMatch.index : 0;
+  const paramsString = headerValue.substring(matchIndex + uriMatch[0].length);
 
   // Split by semicolon and parse each parameter
   const paramPairs = paramsString.split(";");

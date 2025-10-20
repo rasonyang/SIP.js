@@ -3,15 +3,8 @@
  */
 
 import { IncomingNotifyRequest } from "../../../../lib/core/messages/methods/notify.js";
-import { Session } from "../../../../lib/api/session.js";
-import {
-  parseEventHeader,
-  parseNotifyBody,
-  isBroadSoftNotify,
-  BroadSoftEvent,
-  TalkAction,
-  HoldAction
-} from "../../../../lib/api/broadsoft/remote-control.js";
+import { parseEventHeader, parseNotifyBody, isBroadSoftNotify } from "../../../../lib/api/broadsoft/remote-control.js";
+import { BroadSoftEvent, TalkAction } from "../../../../lib/api/broadsoft/types.js";
 
 describe("BroadSoft Remote Control", () => {
   describe("parseEventHeader", () => {
@@ -30,23 +23,6 @@ describe("BroadSoft Remote Control", () => {
       const result = parseEventHeader(mockRequest);
 
       expect(result).toBe(BroadSoftEvent.Talk);
-    });
-
-    it("should parse Event: hold header", () => {
-      const mockRequest = {
-        message: {
-          getHeader: (name: string) => {
-            if (name === "event") {
-              return "hold";
-            }
-            return undefined;
-          }
-        }
-      } as unknown as IncomingNotifyRequest;
-
-      const result = parseEventHeader(mockRequest);
-
-      expect(result).toBe(BroadSoftEvent.Hold);
     });
 
     it("should handle Event header with parameters", () => {
@@ -142,48 +118,6 @@ describe("BroadSoft Remote Control", () => {
       expect(result?.action).toBe(TalkAction.Mute);
     });
 
-    it("should parse hold action from body", () => {
-      const mockRequest = {
-        message: {
-          body: "hold"
-        }
-      } as unknown as IncomingNotifyRequest;
-
-      const result = parseNotifyBody(mockRequest, BroadSoftEvent.Hold);
-
-      expect(result).toBeDefined();
-      expect(result?.event).toBe(BroadSoftEvent.Hold);
-      expect(result?.action).toBe(HoldAction.Hold);
-    });
-
-    it("should parse unhold action from body", () => {
-      const mockRequest = {
-        message: {
-          body: "unhold"
-        }
-      } as unknown as IncomingNotifyRequest;
-
-      const result = parseNotifyBody(mockRequest, BroadSoftEvent.Hold);
-
-      expect(result).toBeDefined();
-      expect(result?.event).toBe(BroadSoftEvent.Hold);
-      expect(result?.action).toBe(HoldAction.Unhold);
-    });
-
-    it("should parse resume action from body", () => {
-      const mockRequest = {
-        message: {
-          body: "resume"
-        }
-      } as unknown as IncomingNotifyRequest;
-
-      const result = parseNotifyBody(mockRequest, BroadSoftEvent.Hold);
-
-      expect(result).toBeDefined();
-      expect(result?.event).toBe(BroadSoftEvent.Hold);
-      expect(result?.action).toBe(HoldAction.Resume);
-    });
-
     it("should handle case-insensitive body", () => {
       const mockRequest = {
         message: {
@@ -222,7 +156,7 @@ describe("BroadSoft Remote Control", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined for missing body", () => {
+    it("should parse empty body for talk event as Talk action", () => {
       const mockRequest = {
         message: {
           body: undefined
@@ -231,7 +165,37 @@ describe("BroadSoft Remote Control", () => {
 
       const result = parseNotifyBody(mockRequest, BroadSoftEvent.Talk);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeDefined();
+      expect(result?.event).toBe(BroadSoftEvent.Talk);
+      expect(result?.action).toBe(TalkAction.Talk);
+    });
+
+    it("should parse empty string body for talk event as Talk action", () => {
+      const mockRequest = {
+        message: {
+          body: ""
+        }
+      } as unknown as IncomingNotifyRequest;
+
+      const result = parseNotifyBody(mockRequest, BroadSoftEvent.Talk);
+
+      expect(result).toBeDefined();
+      expect(result?.event).toBe(BroadSoftEvent.Talk);
+      expect(result?.action).toBe(TalkAction.Talk);
+    });
+
+    it("should parse whitespace-only body for talk event as Talk action", () => {
+      const mockRequest = {
+        message: {
+          body: "   "
+        }
+      } as unknown as IncomingNotifyRequest;
+
+      const result = parseNotifyBody(mockRequest, BroadSoftEvent.Talk);
+
+      expect(result).toBeDefined();
+      expect(result?.event).toBe(BroadSoftEvent.Talk);
+      expect(result?.action).toBe(TalkAction.Talk);
     });
   });
 
@@ -242,21 +206,6 @@ describe("BroadSoft Remote Control", () => {
           getHeader: (name: string) => {
             if (name === "event") {
               return "talk";
-            }
-            return undefined;
-          }
-        }
-      } as unknown as IncomingNotifyRequest;
-
-      expect(isBroadSoftNotify(mockRequest)).toBe(true);
-    });
-
-    it("should return true for hold event", () => {
-      const mockRequest = {
-        message: {
-          getHeader: (name: string) => {
-            if (name === "event") {
-              return "hold";
             }
             return undefined;
           }

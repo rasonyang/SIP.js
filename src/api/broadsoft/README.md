@@ -1,10 +1,9 @@
 # BroadSoft Access-Side Extensions
 
-This module provides support for three common BroadSoft Access-Side SIP extensions in SIP.js:
+This module provides support for two common BroadSoft Access-Side SIP extensions in SIP.js:
 
 1. **Call-Info with answer-after parameter** - Auto-Answer
-2. **NOTIFY (Event: talk)** - Remote Control for microphone state
-3. **NOTIFY (Event: hold)** - Remote Control for hold/resume state
+2. **NOTIFY (Event: talk)** - Remote Control for answering/resuming calls
 
 ## Features
 
@@ -85,39 +84,6 @@ invitation.delegate = {
 };
 ```
 
-### 3. Remote Control - Hold Events (NOTIFY with Event: hold)
-
-Handle remote control of hold state via NOTIFY messages.
-
-**SIP Message Example:**
-```
-NOTIFY sip:alice@example.com SIP/2.0
-Event: hold
-Content-Type: text/plain
-
-hold
-```
-
-**Actions:**
-- `hold` - Put call on hold
-- `unhold` - Resume call
-- `resume` - Resume call (alternative)
-
-**Usage:**
-```typescript
-import { BroadSoft } from "sip.js";
-
-const remoteControlOptions: BroadSoft.RemoteControlOptions = {
-  enabled: true,
-  autoApply: true,
-  onHoldEvent: (action) => {
-    console.log(`Hold event: ${action}`);
-  }
-};
-
-// Same as talk events - use handleRemoteControlNotify()
-```
-
 ## API Reference
 
 ### Types
@@ -137,7 +103,6 @@ interface AutoAnswerOptions {
 interface RemoteControlOptions {
   enabled: boolean;
   onTalkEvent?: (action: TalkAction) => void;
-  onHoldEvent?: (action: HoldAction) => void;
   autoApply: boolean; // Auto-apply actions to session
 }
 ```
@@ -147,15 +112,6 @@ interface RemoteControlOptions {
 enum TalkAction {
   Talk = "talk",   // Unmute
   Mute = "mute"    // Mute
-}
-```
-
-#### `HoldAction`
-```typescript
-enum HoldAction {
-  Hold = "hold",
-  Unhold = "unhold",
-  Resume = "resume"
 }
 ```
 
@@ -210,9 +166,6 @@ enum HoldAction {
 - `applyTalkAction(session: Session, action: TalkAction): void`
   - Manually apply a talk action to a session
 
-- `applyHoldAction(session: Session, action: HoldAction): Promise<void>`
-  - Manually apply a hold action to a session
-
 ## Complete Example
 
 See [examples/broadsoft-extensions.ts](../../../examples/broadsoft-extensions.ts) for a complete working example.
@@ -241,16 +194,6 @@ Content-Length: 4
 mute
 ```
 
-**Hold Event:**
-```
-NOTIFY sip:user@domain SIP/2.0
-Event: hold
-Content-Type: text/plain
-Content-Length: 4
-
-hold
-```
-
 ## Browser Compatibility
 
 The remote control features require WebRTC support and work with the Web platform `SessionDescriptionHandler`. They have been tested with:
@@ -263,7 +206,6 @@ The remote control features require WebRTC support and work with the Web platfor
 
 - Auto-answer respects the session state and will only answer if the session is in `Initial` or `Establishing` state
 - Remote control actions are only applied if `autoApply: true` is set, otherwise only callbacks are invoked
-- The hold implementation uses SDP modification (sendonly/inactive) following RFC 3264
 - All callbacks are wrapped in try-catch to prevent errors from breaking the control flow
 
 ## References

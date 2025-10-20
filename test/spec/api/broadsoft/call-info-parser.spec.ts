@@ -77,10 +77,7 @@ describe("BroadSoft Call-Info Parser", () => {
       const mockRequest = {
         getHeaders: (name: string) => {
           if (name === "call-info") {
-            return [
-              "<sip:example.com>; answer-after=1",
-              "<sip:example2.com>; purpose=\"icon\""
-            ];
+            return ["<sip:example.com>; answer-after=1", '<sip:example2.com>; purpose="icon"'];
           }
           return [];
         }
@@ -95,7 +92,7 @@ describe("BroadSoft Call-Info Parser", () => {
 
     it("should return empty array when no Call-Info headers present", () => {
       const mockRequest = {
-        getHeaders: (name: string) => []
+        getHeaders: () => []
       } as unknown as IncomingRequestMessage;
 
       const result = extractCallInfoHeaders(mockRequest);
@@ -124,7 +121,7 @@ describe("BroadSoft Call-Info Parser", () => {
       const mockRequest = {
         getHeaders: (name: string) => {
           if (name === "call-info") {
-            return ["<sip:example.com>; purpose=\"icon\""];
+            return ['<sip:example.com>; purpose="icon"'];
           }
           return [];
         }
@@ -139,10 +136,7 @@ describe("BroadSoft Call-Info Parser", () => {
       const mockRequest = {
         getHeaders: (name: string) => {
           if (name === "call-info") {
-            return [
-              "<sip:example.com>; answer-after=2",
-              "<sip:example2.com>; answer-after=5"
-            ];
+            return ["<sip:example.com>; answer-after=2", "<sip:example2.com>; answer-after=5"];
           }
           return [];
         }
@@ -172,7 +166,7 @@ describe("BroadSoft Call-Info Parser", () => {
       const mockRequest = {
         getHeaders: (name: string) => {
           if (name === "call-info") {
-            return ["<sip:example.com>; purpose=\"icon\""];
+            return ['<sip:example.com>; purpose="icon"'];
           }
           return [];
         }
@@ -183,7 +177,7 @@ describe("BroadSoft Call-Info Parser", () => {
 
     it("should return false when no Call-Info headers", () => {
       const mockRequest = {
-        getHeaders: (name: string) => []
+        getHeaders: () => []
       } as unknown as IncomingRequestMessage;
 
       expect(hasAutoAnswer(mockRequest)).toBe(false);

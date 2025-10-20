@@ -5,19 +5,11 @@
  */
 
 import { IncomingNotifyRequest } from "../../core/messages/methods/notify.js";
-import { IncomingRequestMessage } from "../../core/messages/incoming-request-message.js";
+import { Invitation } from "../invitation.js";
 import { Notification } from "../notification.js";
 import { Session } from "../session.js";
-import { SessionDescriptionHandler } from "../session-description-handler.js";
-import {
-  BroadSoftEvent,
-  BroadSoftNotifyBody,
-  HoldAction,
-  HoldNotifyBody,
-  RemoteControlOptions,
-  TalkAction,
-  TalkNotifyBody
-} from "./types.js";
+import { SessionState } from "../session-state.js";
+import { BroadSoftEvent, BroadSoftNotifyBody, RemoteControlOptions, TalkAction, TalkNotifyBody } from "./types.js";
 
 /**
  * Parse the Event header from a NOTIFY request
@@ -32,10 +24,10 @@ export function parseEventHeader(request: IncomingNotifyRequest): BroadSoftEvent
       return undefined;
     }
 
-    // Event header format: "talk" or "hold" (may have parameters)
+    // Event header format: "talk" (may have parameters)
     const eventType = eventHeader.split(";")[0].trim().toLowerCase();
 
-    if (eventType === BroadSoftEvent.Talk || eventType === BroadSoftEvent.Hold) {
+    if (eventType === BroadSoftEvent.Talk) {
       return eventType as BroadSoftEvent;
     }
   } catch (e) {
@@ -49,8 +41,10 @@ export function parseEventHeader(request: IncomingNotifyRequest): BroadSoftEvent
  * Parse the body of a NOTIFY request for BroadSoft events
  *
  * Expected body format:
- * - For talk events: "talk" or "mute"
- * - For hold events: "hold", "unhold", or "resume"
+ * - For talk events: "talk" or "mute", or empty (defaults to "talk"/unmute)
+ *
+ * Note: FreeSWITCH's uuid_phone_event sends NOTIFY with empty body.
+ * When body is empty, Event: talk → TalkAction.Talk (unmute)
  *
  * @param request - Incoming NOTIFY request
  * @param eventType - The type of event (from Event header)
@@ -62,25 +56,26 @@ export function parseNotifyBody(
 ): BroadSoftNotifyBody | undefined {
   try {
     const body = request.message.body;
-    if (!body) {
-      return undefined;
+    const action = body ? body.trim().toLowerCase() : "";
+
+    // Handle empty body (FreeSWITCH uuid_phone_event behavior)
+    if (action === "") {
+      if (eventType === BroadSoftEvent.Talk) {
+        // Empty body for talk event means unmute
+        return {
+          event: BroadSoftEvent.Talk,
+          action: TalkAction.Talk
+        } as TalkNotifyBody;
+      }
     }
 
-    const action = body.trim().toLowerCase();
-
+    // Handle explicit actions in body
     if (eventType === BroadSoftEvent.Talk) {
       if (action === TalkAction.Talk || action === TalkAction.Mute) {
         return {
           event: BroadSoftEvent.Talk,
           action: action as TalkAction
         } as TalkNotifyBody;
-      }
-    } else if (eventType === BroadSoftEvent.Hold) {
-      if (action === HoldAction.Hold || action === HoldAction.Unhold || action === HoldAction.Resume) {
-        return {
-          event: BroadSoftEvent.Hold,
-          action: action as HoldAction
-        } as HoldNotifyBody;
       }
     }
   } catch (e) {
@@ -91,70 +86,75 @@ export function parseNotifyBody(
 }
 
 /**
- * Apply a talk action to a session
+ * Apply a talk action to a session according to BroadSoft specification
+ *
+ * @remarks
+ * Per BroadSoft spec, Event: talk means "answer" or "resume":
+ * - If session is in Initial state (ringing): Accept the call (send 200 OK with SDP)
+ * - If session is in Established state: Send re-INVITE with a=sendrecv to resume from hold
+ * - Otherwise: No action taken
  *
  * @param session - The session to apply the action to
- * @param action - The talk action (talk or mute)
+ * @param action - The talk action (only TalkAction.Talk triggers SIP signaling)
  */
-export function applyTalkAction(session: Session, action: TalkAction): void {
-  const sdh = session.sessionDescriptionHandler;
-  if (!sdh) {
-    throw new Error("Session does not have a session description handler");
+export async function applyTalkAction(session: Session, action: TalkAction): Promise<void> {
+  // Only TalkAction.Talk triggers SIP signaling per BroadSoft spec
+  // TalkAction.Mute is not used in BroadSoft NOTIFY (FreeSWITCH sends empty body)
+  if (action !== TalkAction.Talk) {
+    return;
   }
 
-  // Check if the SDH has the necessary methods (Web platform SDH)
-  if (typeof (sdh as any).enableSenderTracks === "function") {
-    const webSDH = sdh as any;
+  // Log current session state for debugging
+  /* eslint-disable no-console */
+  console.log(`[BroadSoft] applyTalkAction: session.state = ${session.state}`);
+  /* eslint-enable no-console */
 
-    if (action === TalkAction.Talk) {
-      // Unmute - enable sender tracks
-      webSDH.enableSenderTracks(true);
-    } else if (action === TalkAction.Mute) {
-      // Mute - disable sender tracks
-      webSDH.enableSenderTracks(false);
+  if (session.state === SessionState.Initial) {
+    // Session is ringing - accept the call
+    if (session instanceof Invitation) {
+      /* eslint-disable no-console */
+      console.log("[BroadSoft] applyTalkAction: Calling session.accept()");
+      /* eslint-enable no-console */
+      await session.accept();
+      /* eslint-disable no-console */
+      console.log("[BroadSoft] applyTalkAction: session.accept() completed");
+      /* eslint-enable no-console */
+    } else {
+      throw new Error("Cannot accept - session is not an Invitation");
     }
+  } else if (session.state === SessionState.Established) {
+    // Session is established - send re-INVITE with sendrecv to resume
+    // Use resumeModifier to explicitly set a=sendrecv in SDP
+    /* eslint-disable no-console */
+    console.log("[BroadSoft] applyTalkAction: Sending re-INVITE with sendrecv");
+    /* eslint-enable no-console */
+    await session.invite({
+      sessionDescriptionHandlerOptions: session.sessionDescriptionHandlerOptions,
+      sessionDescriptionHandlerModifiers: [resumeModifier]
+    });
   } else {
-    throw new Error("Session description handler does not support track control");
+    /* eslint-disable no-console */
+    console.log(`[BroadSoft] applyTalkAction: No action for state ${session.state}`);
+    /* eslint-enable no-console */
   }
+  // For other states (Establishing, Terminating, Terminated), do nothing
 }
 
 /**
- * Apply a hold action to a session
+ * SDP modifier for resuming a call from hold
  *
- * @param session - The session to apply the action to
- * @param action - The hold action (hold, unhold, or resume)
+ * This modifier sets the media direction to "sendrecv" by replacing sendonly/inactive
  */
-export async function applyHoldAction(session: Session, action: HoldAction): Promise<void> {
-  if (action === HoldAction.Hold) {
-    // Put the call on hold
-    await session.invite({
-      sessionDescriptionHandlerOptions: session.sessionDescriptionHandlerOptions,
-      sessionDescriptionHandlerModifiers: [holdModifier]
-    });
-  } else if (action === HoldAction.Unhold || action === HoldAction.Resume) {
-    // Resume the call from hold
-    await session.invite({
-      sessionDescriptionHandlerOptions: session.sessionDescriptionHandlerOptions,
-      sessionDescriptionHandlerModifiers: []
-    });
-  }
-}
-
-/**
- * SDP modifier for putting a call on hold
- *
- * This modifier sets the media direction to "sendonly" or "inactive"
- */
-function holdModifier(description: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
+function resumeModifier(description: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
   if (!description.sdp) {
     return Promise.resolve(description);
   }
 
   let sdp = description.sdp;
 
-  // Replace sendrecv with sendonly (or recvonly with inactive)
-  sdp = sdp.replace(/a=sendrecv\r\n/g, "a=sendonly\r\n");
-  sdp = sdp.replace(/a=recvonly\r\n/g, "a=inactive\r\n");
+  // Replace sendonly with sendrecv and inactive with recvonly
+  sdp = sdp.replace(/a=sendonly\r\n/g, "a=sendrecv\r\n");
+  sdp = sdp.replace(/a=inactive\r\n/g, "a=recvonly\r\n");
 
   return Promise.resolve({
     type: description.type,
@@ -165,8 +165,8 @@ function holdModifier(description: RTCSessionDescriptionInit): Promise<RTCSessio
 /**
  * Handle a BroadSoft remote control NOTIFY request
  *
- * This function parses the NOTIFY request and applies the appropriate action
- * to the session if auto-apply is enabled.
+ * This function parses the NOTIFY request and automatically applies the appropriate
+ * SIP signaling action per BroadSoft specification.
  *
  * @param session - The session receiving the NOTIFY
  * @param request - The incoming NOTIFY request
@@ -201,41 +201,7 @@ export async function handleRemoteControlNotify(
       try {
         options.onTalkEvent(talkBody.action);
       } catch (e) {
-        console.error("Error in onTalkEvent callback:", e);
-      }
-    }
-
-    // Auto-apply action if enabled
-    if (options.autoApply) {
-      try {
-        applyTalkAction(session, talkBody.action);
-      } catch (e) {
-        console.error("Error applying talk action:", e);
-      }
-    }
-
-    return true;
-  }
-
-  // Handle hold events
-  if (notifyBody.event === BroadSoftEvent.Hold) {
-    const holdBody = notifyBody as HoldNotifyBody;
-
-    // Invoke callback
-    if (options.onHoldEvent) {
-      try {
-        options.onHoldEvent(holdBody.action);
-      } catch (e) {
-        console.error("Error in onHoldEvent callback:", e);
-      }
-    }
-
-    // Auto-apply action if enabled
-    if (options.autoApply) {
-      try {
-        await applyHoldAction(session, holdBody.action);
-      } catch (e) {
-        console.error("Error applying hold action:", e);
+        // Silently ignore callback errors
       }
     }
 
@@ -253,7 +219,7 @@ export async function handleRemoteControlNotify(
  */
 export function isBroadSoftNotify(request: IncomingNotifyRequest): boolean {
   const eventType = parseEventHeader(request);
-  return eventType === BroadSoftEvent.Talk || eventType === BroadSoftEvent.Hold;
+  return eventType === BroadSoftEvent.Talk;
 }
 
 /**
@@ -271,7 +237,7 @@ export function parseEventHeaderFromNotification(notification: Notification): Br
 
     const eventType = eventHeader.split(";")[0].trim().toLowerCase();
 
-    if (eventType === BroadSoftEvent.Talk || eventType === BroadSoftEvent.Hold) {
+    if (eventType === BroadSoftEvent.Talk) {
       return eventType as BroadSoftEvent;
     }
   } catch (e) {
@@ -294,25 +260,26 @@ export function parseNotifyBodyFromNotification(
 ): BroadSoftNotifyBody | undefined {
   try {
     const body = notification.request.body;
-    if (!body) {
-      return undefined;
+    const action = body ? body.trim().toLowerCase() : "";
+
+    // Handle empty body (FreeSWITCH uuid_phone_event behavior)
+    if (action === "") {
+      if (eventType === BroadSoftEvent.Talk) {
+        // Empty body for talk event means unmute/talk
+        return {
+          event: BroadSoftEvent.Talk,
+          action: TalkAction.Talk
+        } as TalkNotifyBody;
+      }
     }
 
-    const action = body.trim().toLowerCase();
-
+    // Handle explicit actions in body
     if (eventType === BroadSoftEvent.Talk) {
       if (action === TalkAction.Talk || action === TalkAction.Mute) {
         return {
           event: BroadSoftEvent.Talk,
           action: action as TalkAction
         } as TalkNotifyBody;
-      }
-    } else if (eventType === BroadSoftEvent.Hold) {
-      if (action === HoldAction.Hold || action === HoldAction.Unhold || action === HoldAction.Resume) {
-        return {
-          event: BroadSoftEvent.Hold,
-          action: action as HoldAction
-        } as HoldNotifyBody;
       }
     }
   } catch (e) {
@@ -326,6 +293,8 @@ export function parseNotifyBodyFromNotification(
  * Handle a BroadSoft remote control NOTIFY from a Notification wrapper
  *
  * This is a convenience function for use with SessionDelegate.onNotify callback.
+ * Per BroadSoft specification, this function automatically applies the appropriate
+ * SIP signaling (accept call or resume from hold) after invoking callbacks.
  *
  * @param session - The session receiving the NOTIFY
  * @param notification - The notification wrapper from delegate
@@ -360,42 +329,18 @@ export async function handleRemoteControlNotification(
       try {
         options.onTalkEvent(talkBody.action);
       } catch (e) {
-        console.error("Error in onTalkEvent callback:", e);
+        // Silently ignore callback errors
       }
     }
 
-    // Auto-apply action if enabled
-    if (options.autoApply) {
-      try {
-        applyTalkAction(session, talkBody.action);
-      } catch (e) {
-        console.error("Error applying talk action:", e);
-      }
-    }
-
-    return true;
-  }
-
-  // Handle hold events
-  if (notifyBody.event === BroadSoftEvent.Hold) {
-    const holdBody = notifyBody as HoldNotifyBody;
-
-    // Invoke callback
-    if (options.onHoldEvent) {
-      try {
-        options.onHoldEvent(holdBody.action);
-      } catch (e) {
-        console.error("Error in onHoldEvent callback:", e);
-      }
-    }
-
-    // Auto-apply action if enabled
-    if (options.autoApply) {
-      try {
-        await applyHoldAction(session, holdBody.action);
-      } catch (e) {
-        console.error("Error applying hold action:", e);
-      }
+    // Automatically apply SIP signaling per BroadSoft spec
+    try {
+      await applyTalkAction(session, talkBody.action);
+    } catch (e) {
+      // Log error but continue - don't block NOTIFY response
+      /* eslint-disable no-console */
+      console.error("[BroadSoft] Error applying talk action:", e);
+      /* eslint-enable no-console */
     }
 
     return true;
@@ -412,5 +357,5 @@ export async function handleRemoteControlNotification(
  */
 export function isBroadSoftNotification(notification: Notification): boolean {
   const eventType = parseEventHeaderFromNotification(notification);
-  return eventType === BroadSoftEvent.Talk || eventType === BroadSoftEvent.Hold;
+  return eventType === BroadSoftEvent.Talk;
 }

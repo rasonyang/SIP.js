@@ -1026,7 +1026,10 @@ export abstract class Session {
    */
   protected onNotifyRequest(request: IncomingNotifyRequest): void {
     this.logger.log("Session.onNotifyRequest");
-    if (this.state !== SessionState.Established) {
+
+    // Allow NOTIFY during Initial and Establishing states for BroadSoft remote control
+    // Only reject NOTIFY if session is terminating or terminated
+    if (this.state === SessionState.Terminating || this.state === SessionState.Terminated) {
       this.logger.error(`NOTIFY received while in state ${this.state}, dropping request`);
       return;
     }

@@ -1,19 +1,15 @@
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable tree-shaking/no-side-effects-in-initialization */
 /**
  * BroadSoft Access-Side Extensions Example
  *
- * This example demonstrates how to use the three common BroadSoft Access-Side extensions:
+ * This example demonstrates how to use the two common BroadSoft Access-Side extensions:
  * 1. Call-Info: ...; answer-after=1 - Auto-Answer
- * 2. NOTIFY (Event: talk) - Remote Control Event for microphone
- * 3. NOTIFY (Event: hold) - Remote Control Event for hold/resume
+ * 2. NOTIFY (Event: talk) - Remote Control Event for answering/resuming calls
  */
 
-import {
-  BroadSoft,
-  Invitation,
-  UserAgent,
-  UserAgentOptions,
-  Web
-} from "../src/api/index.js";
+import { BroadSoft, Invitation, UserAgent, UserAgentOptions, Web } from "../src/api/index.js";
 
 // Configure UserAgent
 const userAgentOptions: UserAgentOptions = {
@@ -41,23 +37,16 @@ const autoAnswerOptions: BroadSoft.AutoAnswerOptions = {
 };
 
 // Configure BroadSoft remote control options
+// Per BroadSoft spec, remote control NOTIFY automatically triggers SIP signaling:
+// - Event: talk → Answers ringing call or resumes from hold (sends 200 OK or re-INVITE)
+// Callbacks are for UI updates only
 const remoteControlOptions: BroadSoft.RemoteControlOptions = {
   enabled: true,
-  autoApply: true, // Automatically apply remote control actions
   onTalkEvent: (action) => {
     console.log(`Remote control - Talk event: ${action}`);
-    if (action === BroadSoft.TalkAction.Mute) {
-      console.log("Microphone muted by remote control");
-    } else if (action === BroadSoft.TalkAction.Talk) {
-      console.log("Microphone unmuted by remote control");
-    }
-  },
-  onHoldEvent: (action) => {
-    console.log(`Remote control - Hold event: ${action}`);
-    if (action === BroadSoft.HoldAction.Hold) {
-      console.log("Call placed on hold by remote control");
-    } else if (action === BroadSoft.HoldAction.Unhold || action === BroadSoft.HoldAction.Resume) {
-      console.log("Call resumed by remote control");
+    if (action === BroadSoft.TalkAction.Talk) {
+      console.log("Call will be answered/resumed automatically");
+      // Update UI to show active call state
     }
   }
 };
@@ -91,11 +80,7 @@ userAgent.delegate = {
         if (isBroadSoft) {
           console.log("BroadSoft remote control NOTIFY detected");
           // Handle the remote control NOTIFY
-          BroadSoft.handleRemoteControlNotification(
-            invitation,
-            notification,
-            remoteControlOptions
-          ).catch((error) => {
+          BroadSoft.handleRemoteControlNotification(invitation, notification, remoteControlOptions).catch((error) => {
             console.error("Error handling remote control NOTIFY:", error);
           });
 
@@ -117,31 +102,14 @@ userAgent.delegate = {
 };
 
 // Start the UserAgent
-userAgent.start().then(() => {
-  console.log("UserAgent started and ready to receive calls");
-}).catch((error) => {
-  console.error("Failed to start UserAgent:", error);
-});
-
-// Example: Manual control of talk/hold actions
-// (In case you want to trigger these locally instead of via remote control)
-function manualTalkControl(session: Invitation, action: BroadSoft.TalkAction): void {
-  try {
-    BroadSoft.applyTalkAction(session, action);
-    console.log(`Applied talk action: ${action}`);
-  } catch (error) {
-    console.error("Error applying talk action:", error);
-  }
-}
-
-async function manualHoldControl(session: Invitation, action: BroadSoft.HoldAction): Promise<void> {
-  try {
-    await BroadSoft.applyHoldAction(session, action);
-    console.log(`Applied hold action: ${action}`);
-  } catch (error) {
-    console.error("Error applying hold action:", error);
-  }
-}
+userAgent
+  .start()
+  .then(() => {
+    console.log("UserAgent started and ready to receive calls");
+  })
+  .catch((error) => {
+    console.error("Failed to start UserAgent:", error);
+  });
 
 // Example: Parsing Call-Info headers manually
 function examineCallInfoHeaders(invitation: Invitation): void {
@@ -162,11 +130,14 @@ function examineCallInfoHeaders(invitation: Invitation): void {
 // Graceful shutdown
 process.on("SIGINT", () => {
   console.log("Shutting down...");
-  userAgent.stop().then(() => {
-    console.log("UserAgent stopped");
-    process.exit(0);
-  }).catch((error) => {
-    console.error("Error stopping UserAgent:", error);
-    process.exit(1);
-  });
+  userAgent
+    .stop()
+    .then(() => {
+      console.log("UserAgent stopped");
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Error stopping UserAgent:", error);
+      process.exit(1);
+    });
 });

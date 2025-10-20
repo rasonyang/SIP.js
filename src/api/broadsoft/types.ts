@@ -15,7 +15,7 @@ export interface CallInfoHeader {
     /** Auto-answer delay in seconds (0 = immediate, > 0 = delayed) */
     answerAfter?: number;
     /** Additional parameters */
-    [key: string]: string | number | undefined;
+    [key: string]: string | number | boolean | undefined;
   };
 }
 
@@ -24,9 +24,7 @@ export interface CallInfoHeader {
  */
 export enum BroadSoftEvent {
   /** Remote control event for talk/mute operations */
-  Talk = "talk",
-  /** Remote control event for hold operations */
-  Hold = "hold"
+  Talk = "talk"
 }
 
 /**
@@ -40,18 +38,6 @@ export enum TalkAction {
 }
 
 /**
- * Hold event actions
- */
-export enum HoldAction {
-  /** Put the call on hold */
-  Hold = "hold",
-  /** Resume the call from hold */
-  Unhold = "unhold",
-  /** Alternative term for resume */
-  Resume = "resume"
-}
-
-/**
  * Parsed NOTIFY body for talk events
  */
 export interface TalkNotifyBody {
@@ -60,17 +46,9 @@ export interface TalkNotifyBody {
 }
 
 /**
- * Parsed NOTIFY body for hold events
+ * Type for BroadSoft NOTIFY body
  */
-export interface HoldNotifyBody {
-  event: BroadSoftEvent.Hold;
-  action: HoldAction;
-}
-
-/**
- * Union type for all BroadSoft NOTIFY body types
- */
-export type BroadSoftNotifyBody = TalkNotifyBody | HoldNotifyBody;
+export type BroadSoftNotifyBody = TalkNotifyBody;
 
 /**
  * Options for auto-answer behavior
@@ -94,10 +72,6 @@ export interface RemoteControlOptions {
   enabled: boolean;
   /** Callback for talk events */
   onTalkEvent?: (action: TalkAction) => void;
-  /** Callback for hold events */
-  onHoldEvent?: (action: HoldAction) => void;
-  /** Whether to automatically apply remote control actions */
-  autoApply: boolean;
 }
 
 /**

@@ -45,7 +45,7 @@ export function handleAutoAnswer(
     try {
       options.onBeforeAutoAnswer(delaySeconds);
     } catch (e) {
-      console.error("Error in onBeforeAutoAnswer callback:", e);
+      // Silently ignore callback errors
     }
   }
 
@@ -53,19 +53,20 @@ export function handleAutoAnswer(
   setTimeout(() => {
     // Check if invitation is still in a state that can be accepted
     if (invitation.state === "Initial" || invitation.state === "Establishing") {
-      invitation.accept(acceptOptions)
+      invitation
+        .accept(acceptOptions)
         .then(() => {
           // Invoke post-answer callback
           if (options.onAfterAutoAnswer) {
             try {
               options.onAfterAutoAnswer();
             } catch (e) {
-              console.error("Error in onAfterAutoAnswer callback:", e);
+              // Silently ignore callback errors
             }
           }
         })
-        .catch((error) => {
-          console.error("Auto-answer failed:", error);
+        .catch(() => {
+          // Silently ignore auto-answer failures
         });
     }
   }, delayMs);

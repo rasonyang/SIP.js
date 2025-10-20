@@ -1,18 +1,15 @@
 /**
  * BroadSoft Access-Side Extensions for SIP.js
  *
- * This module provides support for three common BroadSoft Access-Side extensions:
+ * This module provides support for two common BroadSoft Access-Side extensions:
  *
  * 1. Call-Info: ...; answer-after=1 - Auto-Answer
  *    Automatically answers incoming calls when the answer-after parameter is present
  *    in the Call-Info header.
  *
  * 2. NOTIFY (Event: talk) - Remote Control Event
- *    Handles remote control of microphone state (mute/unmute) via NOTIFY messages
- *    with Event: talk header.
- *
- * 3. NOTIFY (Event: hold) - Remote Control Event
- *    Handles remote control of call hold state via NOTIFY messages with Event: hold header.
+ *    Automatically answers ringing calls or resumes calls from hold when receiving
+ *    NOTIFY with Event: talk header. Performs SIP signaling per BroadSoft specification.
  *
  * @example
  * ```typescript
@@ -28,9 +25,7 @@
  * // Configure remote control
  * const remoteControlOptions: BroadSoft.RemoteControlOptions = {
  *   enabled: true,
- *   autoApply: true,
- *   onTalkEvent: (action) => console.log(`Talk event: ${action}`),
- *   onHoldEvent: (action) => console.log(`Hold event: ${action}`)
+ *   onTalkEvent: (action) => console.log(`Talk event: ${action}`)
  * };
  *
  * // Handle incoming invitation
@@ -56,25 +51,16 @@
 export * from "./types.js";
 
 // Export Call-Info parsing utilities
-export {
-  parseCallInfoHeader,
-  extractCallInfoHeaders,
-  getAutoAnswerDelay,
-  hasAutoAnswer
-} from "./call-info-parser.js";
+export { parseCallInfoHeader, extractCallInfoHeaders, getAutoAnswerDelay, hasAutoAnswer } from "./call-info-parser.js";
 
 // Export auto-answer utilities
-export {
-  handleAutoAnswer,
-  shouldAutoAnswer
-} from "./auto-answer.js";
+export { handleAutoAnswer, shouldAutoAnswer } from "./auto-answer.js";
 
 // Export remote control utilities
 export {
   parseEventHeader,
   parseNotifyBody,
   applyTalkAction,
-  applyHoldAction,
   handleRemoteControlNotify,
   isBroadSoftNotify,
   parseEventHeaderFromNotification,
