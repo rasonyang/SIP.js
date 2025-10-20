@@ -21,34 +21,34 @@ import {
 } from "../lib/platform/web/session-description-handler/index.js";
 import * as BroadSoft from "../lib/api/broadsoft/index.js";
 
-// DOM Elements
-const serverInput = document.getElementById("server") as HTMLInputElement;
-const userInput = document.getElementById("user") as HTMLInputElement;
-const passwordInput = document.getElementById("password") as HTMLInputElement;
-const domainInput = document.getElementById("domain") as HTMLInputElement;
+// DOM Elements (will be initialized after DOM loads)
+let serverInput: HTMLInputElement;
+let userInput: HTMLInputElement;
+let passwordInput: HTMLInputElement;
+let domainInput: HTMLInputElement;
 
-const connectButton = document.getElementById("connect") as HTMLButtonElement;
-const disconnectButton = document.getElementById("disconnect") as HTMLButtonElement;
-const answerButton = document.getElementById("answer") as HTMLButtonElement;
-const hangupButton = document.getElementById("hangup") as HTMLButtonElement;
+let connectButton: HTMLButtonElement;
+let disconnectButton: HTMLButtonElement;
+let answerButton: HTMLButtonElement;
+let hangupButton: HTMLButtonElement;
 
-const connectionStatus = document.getElementById("connection-status") as HTMLSpanElement;
-const remoteAudio = document.getElementById("remoteAudio") as HTMLAudioElement;
-const localAudio = document.getElementById("localAudio") as HTMLAudioElement;
+let connectionStatus: HTMLSpanElement;
+let remoteAudio: HTMLAudioElement;
+let localAudio: HTMLAudioElement;
 
-const muteCheckbox = document.getElementById("mute") as HTMLInputElement;
+let muteCheckbox: HTMLInputElement;
 
 // BroadSoft Status Elements
-const autoAnswerEnabled = document.getElementById("auto-answer-enabled") as HTMLSpanElement;
-const autoAnswerDelay = document.getElementById("auto-answer-delay") as HTMLSpanElement;
-const autoAnswerCountdown = document.getElementById("auto-answer-countdown") as HTMLSpanElement;
-const autoAnswerStatus = document.getElementById("auto-answer-status") as HTMLSpanElement;
+let autoAnswerEnabled: HTMLSpanElement;
+let autoAnswerDelay: HTMLSpanElement;
+let autoAnswerCountdown: HTMLSpanElement;
+let autoAnswerStatus: HTMLSpanElement;
 
-const talkEvent = document.getElementById("talk-event") as HTMLSpanElement;
-const talkStatus = document.getElementById("talk-status") as HTMLSpanElement;
+let talkEvent: HTMLSpanElement;
+let talkStatus: HTMLSpanElement;
 
-const eventLog = document.getElementById("event-log") as HTMLDivElement;
-const clearLogButton = document.getElementById("clear-log") as HTMLButtonElement;
+let eventLog: HTMLDivElement;
+let clearLogButton: HTMLButtonElement;
 
 // State
 let userAgent: UserAgent | undefined;
@@ -58,6 +58,35 @@ let autoAnswerTimer: number | undefined;
 
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize DOM elements
+  serverInput = document.getElementById("server") as HTMLInputElement;
+  userInput = document.getElementById("user") as HTMLInputElement;
+  passwordInput = document.getElementById("password") as HTMLInputElement;
+  domainInput = document.getElementById("domain") as HTMLInputElement;
+
+  connectButton = document.getElementById("connect") as HTMLButtonElement;
+  disconnectButton = document.getElementById("disconnect") as HTMLButtonElement;
+  answerButton = document.getElementById("answer") as HTMLButtonElement;
+  hangupButton = document.getElementById("hangup") as HTMLButtonElement;
+
+  connectionStatus = document.getElementById("connection-status") as HTMLSpanElement;
+  remoteAudio = document.getElementById("remoteAudio") as HTMLAudioElement;
+  localAudio = document.getElementById("localAudio") as HTMLAudioElement;
+
+  muteCheckbox = document.getElementById("mute") as HTMLInputElement;
+
+  autoAnswerEnabled = document.getElementById("auto-answer-enabled") as HTMLSpanElement;
+  autoAnswerDelay = document.getElementById("auto-answer-delay") as HTMLSpanElement;
+  autoAnswerCountdown = document.getElementById("auto-answer-countdown") as HTMLSpanElement;
+  autoAnswerStatus = document.getElementById("auto-answer-status") as HTMLSpanElement;
+
+  talkEvent = document.getElementById("talk-event") as HTMLSpanElement;
+  talkStatus = document.getElementById("talk-status") as HTMLSpanElement;
+
+  eventLog = document.getElementById("event-log") as HTMLDivElement;
+  clearLogButton = document.getElementById("clear-log") as HTMLButtonElement;
+
+  // Setup event listeners
   connectButton.addEventListener("click", connect);
   disconnectButton.addEventListener("click", disconnect);
   answerButton.addEventListener("click", answerCall);
