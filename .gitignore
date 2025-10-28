@@ -11,3 +11,7 @@ test/spec/api/*.js
 test/spec/core/*.js
 test/spec/platform/web/*.js
 test/support/**/*.js
+
+# Chrome extension build artifacts
+/chrome-extension/dist/
+/chrome-extension/node_modules/

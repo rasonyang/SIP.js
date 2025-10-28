@@ -1,0 +1,26 @@
+{
+  "name": "sipjs-chrome-extension",
+  "version": "1.0.0",
+  "description": "Headless SIP.js Chrome Extension (Manifest V3) - Reference Implementation",
+  "private": true,
+  "scripts": {
+    "dev": "webpack --watch --mode development",
+    "build": "webpack --mode production"
+  },
+  "keywords": [
+    "sip",
+    "webrtc",
+    "chrome-extension",
+    "broadsoft",
+    "freeswitch"
+  ],
+  "author": "SIP.js Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^4.8.4",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

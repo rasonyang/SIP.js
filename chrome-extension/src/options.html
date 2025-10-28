@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIP.js Extension - Options</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      color: #202124;
+    }
+
+    .subtitle {
+      margin: 0 0 30px 0;
+      color: #5f6368;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 14px;
+      color: #202124;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 4px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    button.primary {
+      background: #1a73e8;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #1557b0;
+    }
+
+    button.primary:active {
+      background: #0d47a1;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+    }
+
+    button.secondary:hover {
+      background: #f8f9fa;
+      border-color: #1a73e8;
+    }
+
+    button.secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-top: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      background: #e6f4ea;
+      color: #137333;
+      border: 1px solid #a8dab5;
+    }
+
+    .message.error {
+      background: #fce8e6;
+      color: #c5221f;
+      border: 1px solid #f0ada9;
+    }
+
+    .note {
+      background: #e8f0fe;
+      border-left: 4px solid #1a73e8;
+      padding: 12px 16px;
+      margin-top: 30px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #174ea6;
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .status-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .status-section h2 {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .status-label {
+      font-weight: 500;
+      color: #5f6368;
+    }
+
+    .status-value {
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .status-value.connected {
+      color: #137333;
+    }
+
+    .status-value.disconnected {
+      color: #5f6368;
+    }
+
+    .status-value.error {
+      color: #c5221f;
+    }
+
+    .status-value.registered {
+      color: #137333;
+    }
+
+    .status-value.unregistered {
+      color: #5f6368;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SIP.js Extension Configuration</h1>
+    <p class="subtitle">Headless SIP client with BroadSoft support</p>
+
+    <form id="optionsForm">
+      <div class="form-group">
+        <label for="username">SIP Username</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+        <div class="help-text">Your SIP account username</div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">SIP Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+        <div class="help-text">Your SIP account password</div>
+      </div>
+
+      <div class="form-group">
+        <label for="wssUrl">WebSocket Server URL</label>
+        <input type="text" id="wssUrl" name="wssUrl" required placeholder="wss://127.0.0.1:5066">
+        <div class="help-text">WSS URL (e.g., wss://127.0.0.1:5066 or wss://sip.example.com:7443)</div>
+      </div>
+
+      <div class="form-group">
+        <label for="domain">SIP Domain <span style="color: #5f6368; font-weight: normal;">(optional)</span></label>
+        <input type="text" id="domain" name="domain" placeholder="Auto-detected from WSS URL">
+        <div class="help-text">Leave empty to auto-detect from WebSocket URL. Override only if your SIP domain differs from the server hostname.</div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="primary">Save Configuration</button>
+        <button type="button" id="testBtn" class="secondary">Test Connection</button>
+      </div>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="status-section">
+      <h2>Connection Status</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="status-label">Connection:</span>
+          <span id="connectionStatus" class="status-value">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Registration:</span>
+          <span id="registrationStatus" class="status-value">Unknown</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Account:</span>
+          <span id="accountInfo" class="status-value">-</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Last Update:</span>
+          <span id="lastUpdate" class="status-value">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Pure Headless Operation</strong>
+      This extension operates without notifications, badges, or popups.
+      All SIP events are logged to the console.
+      <br><br>
+      <strong>New Features:</strong>
+      <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+        <li>Configuration changes apply automatically - no need to reload the extension</li>
+        <li>Real-time connection status updates every 2 seconds</li>
+        <li>Test your configuration before saving with the "Test Connection" button</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
