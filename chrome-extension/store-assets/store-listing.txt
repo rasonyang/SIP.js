@@ -1,0 +1,166 @@
+=================================================================
+CHROME WEB STORE LISTING - SIP.js Headless Chrome Extension
+=================================================================
+
+EXTENSION NAME:
+SIP.js Headless Chrome Extension
+
+SHORT NAME:
+SIP.js Headless
+
+=================================================================
+SHORT DESCRIPTION (132 characters max):
+=================================================================
+
+Headless SIP/WebRTC client for automated calling. Auto-answer, remote control, BroadSoft support. Monitor via DevTools console.
+
+(Character count: 132)
+
+=================================================================
+DETAILED DESCRIPTION:
+=================================================================
+
+Automated SIP/WebRTC calling extension for Chrome. Designed for developers, testers, and power users who need headless SIP functionality.
+
+KEY FEATURES:
+• Headless operation - monitor all activity via DevTools console
+• Auto-answer support via BroadSoft Call-Info header
+• Remote call control via BroadSoft NOTIFY events
+• WebRTC audio with full-duplex communication
+• Automatic reconnection with exponential backoff
+• Compatible with FreeSWITCH, Asterisk, and BroadSoft servers
+
+USE CASES:
+- Automated phone system testing
+- Contact center integrations
+- SIP client development and debugging
+- Remote call monitoring and control
+- Integration with custom workflows
+
+REQUIREMENTS:
+- SIP account with WebSocket (WSS) support
+- FreeSWITCH, Asterisk, or compatible SIP server
+- Chrome 99+ or Edge 99+
+
+CONFIGURATION:
+Configure via Extension Options page:
+- SIP username and password
+- WebSocket Server URL (wss://)
+- Optional SIP domain
+
+PRIVACY & SECURITY:
+- Credentials stored locally only (chrome.storage.sync)
+- No data sent to third parties or developers
+- Open source - inspect code on GitHub
+- MIT licensed
+
+DOCUMENTATION:
+Full user manual, installation guide, and troubleshooting available on GitHub.
+
+SUPPORT:
+GitHub: https://github.com/onsip/SIP.js
+Issues: https://github.com/onsip/SIP.js/issues
+
+This extension is built with the SIP.js library, the leading JavaScript SIP stack.
+
+=================================================================
+CATEGORY:
+=================================================================
+
+PRIMARY: Productivity
+ALTERNATIVE: Developer Tools
+
+=================================================================
+LANGUAGE:
+=================================================================
+
+English (United States)
+
+=================================================================
+ADDITIONAL INFORMATION:
+=================================================================
+
+Homepage URL:
+https://github.com/onsip/SIP.js
+
+Support URL:
+https://github.com/onsip/SIP.js/issues
+
+Privacy Policy URL:
+https://github.com/onsip/SIP.js/blob/main/chrome-extension/PRIVACY_POLICY.md
+
+=================================================================
+DISTRIBUTION SETTINGS:
+=================================================================
+
+Visibility: Public
+Regions: All regions
+Pricing: Free
+
+=================================================================
+PERMISSIONS JUSTIFICATION (for reviewers):
+=================================================================
+
+The extension requests the following permissions:
+
+1. STORAGE
+   - Purpose: Store SIP account configuration (username, password, server URL)
+   - Data: Stored locally using chrome.storage.sync
+   - Privacy: No data sent to third parties
+
+2. ALARMS
+   - Purpose: Keep Service Worker alive to maintain SIP connection
+   - Frequency: Periodic alarms every 20 seconds
+   - Privacy: No user data involved
+
+3. OFFSCREEN
+   - Purpose: Create offscreen document for WebRTC audio handling
+   - Reason: Service Workers cannot directly handle audio streams
+   - Privacy: No user data collected
+
+4. HOST PERMISSIONS (wss://*/*)
+   - Purpose: Connect to user-configured SIP servers
+   - Justification: Users configure their own SIP servers with different domains/IPs
+   - Why wildcard: Users may use any SIP provider (FreeSWITCH, Asterisk, BroadSoft, etc.)
+   - Security: Only WSS (secure WebSocket) connections allowed
+   - Privacy: No connections made without user configuration
+
+=================================================================
+DEVELOPER RESPONSES TO POTENTIAL REVIEWER QUESTIONS:
+=================================================================
+
+Q: Why does the extension need wildcard WebSocket permissions (wss://*/*/*)?
+A: Users configure their own SIP servers which can be on any domain or IP address. The extension is designed to work with any SIP provider (FreeSWITCH, Asterisk, BroadSoft, etc.). Users explicitly enter their server URL in the options page before any connections are made.
+
+Q: How do users interact with this extension if it has no UI?
+A: The extension is "headless" by design - it's intended for technical users who monitor activity via Chrome DevTools console. Configuration is done through the Extension Options page. All SIP events, call status, and errors are logged to the console. This is explicitly documented in the store listing and user manual.
+
+Q: What user data does this extension collect?
+A: The extension only stores user-provided SIP credentials locally (using chrome.storage.sync). No data is sent to third parties, the extension developers, or any analytics services. All network communication is between the user's browser and their configured SIP server. See our privacy policy for full details.
+
+Q: Is this extension legitimate/safe?
+A: Yes. This extension is open source (MIT license) and the code is publicly available on GitHub at https://github.com/onsip/SIP.js. It's built by the SIP.js project, a well-established JavaScript SIP library. Users can inspect the source code to verify there is no malicious behavior.
+
+=================================================================
+TAGS/KEYWORDS:
+=================================================================
+
+SIP, WebRTC, VoIP, telephony, calling, phone, BroadSoft, FreeSWITCH, Asterisk, automated calling, headless, developer tools, testing, automation
+
+=================================================================
+VERSION NOTES (for initial submission):
+=================================================================
+
+Initial release (v1.0.0) - October 2024
+
+Features:
+- Core SIP/WebRTC calling functionality
+- Auto-answer via BroadSoft Call-Info header
+- Remote call control via BroadSoft NOTIFY events
+- Automatic reconnection with exponential backoff
+- Headless operation with DevTools console monitoring
+- Configuration via Options page
+
+This is a stable, production-ready release suitable for developers and technical users.
+
+=================================================================

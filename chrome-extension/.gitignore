@@ -1,14 +1,147 @@
 # Build output
 dist/
+build/
+*.tsbuildinfo
 
 # Dependencies
 node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+.project
+.settings/
+.classpath
+.factorypath
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# Extension packaging (NEVER commit these!)
+*.pem
+*.crx
+*.zip
+release/
+releases/
+packages/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.webpack/
+.eslintcache
+.stylelintcache
+
+# Backup files
+*.bak
+*.backup
+*~.nib
+*.orig
+
+# Debug files
+.vscode-test/
+chromium-profile/
+chrome-profile/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Webpack stats
+stats.json
+webpack-stats.json
+
+# Source maps (uncomment if you don't want to commit them)
+# *.map
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional: lock files (uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows specific
+$RECYCLE.BIN/
+
+# Linux specific
+.directory
+.Trash-*
+
+# Store assets - Track final assets, exclude working files
+# We WANT to commit:
+# - store-assets/README.md
+# - store-assets/store-listing.txt
+# - store-assets/screenshots/*.png (final screenshots)
+# - store-assets/promotional/*.png (final promotional images)
+
+# But EXCLUDE working/source files:
+store-assets/**/*.psd          # Photoshop working files
+store-assets/**/*.ai           # Illustrator working files
+store-assets/**/*.sketch       # Sketch working files
+store-assets/**/*.fig          # Figma working files
+store-assets/**/*.xcf          # GIMP working files
+store-assets/**/*.afdesign     # Affinity Designer working files
+store-assets/**/*.afphoto      # Affinity Photo working files
+store-assets/**/*.svg          # SVG source files (if not needed)
+store-assets/**/backup/        # Backup folders
+store-assets/**/drafts/        # Draft folders
+store-assets/**/working/       # Working folders
+store-assets/**/*.tmp          # Temporary files
+store-assets/**/*-old.*        # Old versions
+store-assets/**/*-draft.*      # Draft versions
+store-assets/**/.DS_Store      # macOS files

@@ -1,8 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "SIP.js Headless Extension",
+  "name": "SIP.js Headless Chrome Extension",
+  "short_name": "SIP.js Headless",
   "version": "1.0.0",
-  "description": "Headless SIP.js Chrome Extension with BroadSoft support - Reference Implementation",
+  "version_name": "1.0.0",
+  "description": "Headless SIP/WebRTC client for automated calling. Auto-answer, remote control, BroadSoft support. Monitor via DevTools console.",
+  "author": "OnSIP / SIP.js Contributors",
+  "homepage_url": "https://github.com/onsip/SIP.js",
   "permissions": [
     "storage",
     "alarms",
@@ -16,6 +20,7 @@
   },
   "options_page": "options.html",
   "icons": {
+    "16": "assets/icon16.png",
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   }

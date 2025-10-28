@@ -11,7 +11,32 @@ A reference implementation of a headless Chrome extension using SIP.js with Broa
 - **Hot Reload**: Development workflow with automatic rebuilds
 - **Manifest V3**: Modern Chrome extension architecture with Service Workers and offscreen documents
 
-## Installation
+## For End Users
+
+### Installation Options
+
+**Option 1: Chrome Web Store (Recommended)**
+
+🌐 **[Install from Chrome Web Store](https://chrome.google.com/webstore)** - One-click installation with automatic updates
+
+> **Note:** Chrome Web Store listing is currently under review. Once published, this will be the easiest installation method.
+
+**Option 2: Manual Installation (CRX File)**
+
+If you received a `.crx` file to install:
+
+📖 **[Quick Installation Guide](./QUICK_INSTALL.md)** - 3-minute visual guide with troubleshooting
+
+**Key points:**
+- ⚠️ **Do NOT double-click the `.crx` file** - it won't work!
+- ✅ **Drag and drop** into `chrome://extensions` instead
+- Enable "Developer mode" first
+
+For detailed instructions, see [INSTALLATION.md](./INSTALLATION.md) and [USER_MANUAL.md](./USER_MANUAL.md).
+
+---
+
+## Installation (For Developers)
 
 ### 1. Install Dependencies
 
@@ -174,6 +199,26 @@ This extension is designed for automation and testing scenarios with **no visual
 - **Self-signed certificate errors**: Chrome developer mode should allow self-signed certs
 - **Service Worker terminated**: Check keep-alive alarm in background console
 
+## Packaging and Distribution
+
+This section covers various distribution methods for the extension.
+
+### Recommended: Chrome Web Store
+
+The extension is available on the Chrome Web Store for easy installation and automatic updates:
+
+🌐 **[Chrome Web Store Listing](https://chrome.google.com/webstore)** _(Link will be updated once published)_
+
+**Benefits:**
+- One-click installation
+- Automatic updates
+- No developer mode required
+- Increased discoverability
+
+See [CHROME_WEBSTORE_PUBLISHING.md](./CHROME_WEBSTORE_PUBLISHING.md) for publishing guidelines.
+
+---
+
 ## Architecture
 
 ```
@@ -254,9 +299,33 @@ MIT (same as SIP.js)
 
 This is a reference implementation. For SIP.js library contributions, see the main repository.
 
+## Documentation
+
+### For Developers
+
+- **[README.md](./README.md)** (this file) - Technical documentation and development guide
+- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Comprehensive manual testing procedures
+- **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** - Development status and task tracking
+- **[CHANGELOG.md](./CHANGELOG.md)** - Version history and release notes
+
+### For Distribution and Deployment
+
+- **[QUICK_INSTALL.md](./QUICK_INSTALL.md)** - 3-minute visual installation guide for end users
+- **[INSTALLATION.md](./INSTALLATION.md)** - Detailed installation instructions for all deployment methods
+- **[USER_MANUAL.md](./USER_MANUAL.md)** - End-user guide with configuration and troubleshooting
+- **[PRIVACY_POLICY.md](./PRIVACY_POLICY.md)** - Privacy policy and data handling practices
+- **[CHROME_WEBSTORE_PUBLISHING.md](./CHROME_WEBSTORE_PUBLISHING.md)** - Chrome Web Store publishing guide
+
+### Build Scripts
+
+- **[scripts/build-webstore.sh](./scripts/build-webstore.sh)** - Linux/macOS Chrome Web Store packaging script
+- **[scripts/build-webstore.bat](./scripts/build-webstore.bat)** - Windows Chrome Web Store packaging script
+
 ## Links
 
 - [SIP.js Documentation](https://sipjs.com/)
 - [BroadSoft Extensions README](../src/api/broadsoft/README.md)
 - [FreeSWITCH](https://freeswitch.org/)
 - [Chrome Extension Manifest V3](https://developer.chrome.com/docs/extensions/mv3/)
+- [Chrome Extension Autoupdate](https://developer.chrome.com/docs/extensions/mv3/autoupdate/)
+- [Chrome Enterprise Policy](https://support.google.com/chrome/a/answer/9296680)
