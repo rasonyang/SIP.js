@@ -2,6 +2,7 @@
  * BroadSoft Auto-Answer Tests
  */
 
+import { SessionTerminatedError } from "../../../../lib/api/exceptions/session-terminated.js";
 import { Invitation } from "../../../../lib/api/invitation.js";
 import { IncomingRequestMessage } from "../../../../lib/core/messages/incoming-request-message.js";
 import { handleAutoAnswer, shouldAutoAnswer } from "../../../../lib/api/broadsoft/auto-answer.js";
@@ -251,6 +252,32 @@ describe("BroadSoft Auto-Answer", () => {
         expect(invitation.accept).not.toHaveBeenCalled();
         done();
       }, 0);
+      jasmine.clock().tick(1);
+    });
+
+    it("should log a cancel (not an error) and skip onAfterAutoAnswer when accept() loses the race to a CANCEL", (done) => {
+      const invitation = makeInvitation("<sip:example.com>; answer-after=0");
+      invitation.accept.and.returnValue(Promise.reject(new SessionTerminatedError()));
+      const logger = {
+        log: jasmine.createSpy("log"),
+        warn: jasmine.createSpy("warn"),
+        error: jasmine.createSpy("error")
+      };
+      const onAfterAutoAnswer = jasmine.createSpy("onAfterAutoAnswer");
+      handleAutoAnswer(invitation, { enabled: true, logger, onAfterAutoAnswer } as unknown as AutoAnswerOptions);
+
+      jasmine.clock().tick(0);
+      jasmine.clock().tick(1);
+      Promise.resolve()
+        .then(() => Promise.resolve())
+        .then(() => {
+          expect(onAfterAutoAnswer).not.toHaveBeenCalled();
+          expect(logger.error).not.toHaveBeenCalled();
+          expect(logger.log).toHaveBeenCalledWith(
+            "[BroadSoft] Auto-answer canceled, invitation terminated before the answer was sent"
+          );
+          done();
+        });
       jasmine.clock().tick(1);
     });
 

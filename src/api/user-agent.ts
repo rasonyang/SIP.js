@@ -805,12 +805,18 @@ export class UserAgent {
         // Delegate invitation handling.
         if (this.delegate?.onInvite) {
           if (invitation.autoSendAnInitialProvisionalResponse) {
-            invitation.progress().then(() => {
-              if (this.delegate?.onInvite === undefined) {
-                throw new Error("onInvite undefined.");
+            invitation.progress().then(
+              () => {
+                if (this.delegate?.onInvite === undefined) {
+                  throw new Error("onInvite undefined.");
+                }
+                this.delegate.onInvite(invitation);
+              },
+              (error: Error) => {
+                // The invitation has terminated (for example, CANCEL received while waiting for PRACK).
+                this.logger.warn(`Initial provisional response failed, not delivering invitation: ${error.message}`);
               }
-              this.delegate.onInvite(invitation);
-            });
+            );
             return;
           }
           this.delegate.onInvite(invitation);

@@ -22,6 +22,9 @@ export function makeMockSessionDescriptionHandler(name: string, id: number): jas
   const obj = sdh as any;
   obj.getDescriptionRejectOnce = undefined;
   obj.getDescriptionUndefinedBodyOnce = undefined;
+  // When truthy, the next getDescription() stays pending until getDescriptionRelease() is called.
+  obj.getDescriptionHoldOnce = undefined;
+  obj.getDescriptionRelease = undefined;
   obj.setDescriptionRejectOnce = undefined;
   obj.setDescriptionWaitOnce = undefined;
 
@@ -76,6 +79,17 @@ export function makeMockSessionDescriptionHandler(name: string, id: number): jas
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (sdh as any).getDescriptionUndefinedBodyOnce = undefined;
       bodyObj.body = "";
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((sdh as any).getDescriptionHoldOnce) {
+      // hacky
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (sdh as any).getDescriptionHoldOnce = undefined;
+      return new Promise<BodyAndContentType>((resolve) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (sdh as any).getDescriptionRelease = (): void => resolve(bodyObj);
+      });
     }
 
     return Promise.resolve().then(() => {

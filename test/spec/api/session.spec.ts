@@ -5,7 +5,8 @@ import {
   Inviter,
   SessionDelegate,
   SessionDescriptionHandler,
-  SessionState
+  SessionState,
+  SessionTerminatedError
 } from "../../../lib/api/index.js";
 import { URI } from "../../../lib/grammar/index.js";
 import {
@@ -961,20 +962,20 @@ describe("API Session", () => {
 
       describe("Alice cancel(), Bob accept() - an async race condition (CANCEL wins)", () => {
         let logger: Logger;
-        let acceptResolve: boolean;
+        let acceptError: unknown;
 
         beforeEach(async () => {
           logger = invitation.userAgent.getLogger("sip.Invitation");
-          acceptResolve = false;
+          acceptError = undefined;
           resetSpies();
           spyOn(logger, "error").and.callThrough();
           inviter.cancel();
-          await invitation.accept().then(() => (acceptResolve = true));
+          await invitation.accept().catch((error) => (acceptError = error));
         });
 
-        it("his call to accept() should resolve and log an error", async () => {
+        it("his call to accept() should reject with SessionTerminatedError and log an error", async () => {
           await soon();
-          expect(acceptResolve).toBe(true);
+          expect(acceptError instanceof SessionTerminatedError).toBe(true);
           expect(logger.error).toHaveBeenCalled();
         });
 
@@ -1010,6 +1011,50 @@ describe("API Session", () => {
           const spy = invitationDelegateMock;
           expect(spy.onAck).toHaveBeenCalledTimes(0);
           expect(spy.onCancel).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      describe("Bob accept() pending on SDH getDescription(), Alice cancel() - CANCEL wins", () => {
+        let acceptError: unknown;
+        let acceptSettled: boolean;
+
+        beforeEach(async () => {
+          acceptError = undefined;
+          acceptSettled = false;
+          resetSpies();
+          // Hold the SDH getDescription() so accept() stays in the Establishing state.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (invitation as any).setupSessionDescriptionHandler();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const sdh = invitation.sessionDescriptionHandler as any;
+          sdh.getDescriptionHoldOnce = true;
+          const acceptPromise = invitation.accept().catch((error) => (acceptError = error));
+          void acceptPromise.then(() => (acceptSettled = true));
+          await soon();
+          expect(invitation.state).toBe(SessionState.Establishing);
+          inviter.cancel();
+          await soon();
+          expect(invitation.state).toBe(SessionState.Terminated);
+          expect(acceptSettled).toBe(false);
+          sdh.getDescriptionRelease();
+          await acceptPromise;
+          await soon();
+        });
+
+        it("his call to accept() should reject with SessionTerminatedError", () => {
+          expect(acceptSettled).toBe(true);
+          expect(acceptError instanceof SessionTerminatedError).toBe(true);
+        });
+
+        it("his session should be terminated without sending a 200 to the INVITE", () => {
+          expect(invitation.state).toBe(SessionState.Terminated);
+          const sent = bob.transportSendSpy.calls.allArgs().map((args) => String(args[0]));
+          expect(sent.some((m) => /^SIP\/2.0 487/.test(m))).toBe(true);
+          expect(sent.some((m) => /^SIP\/2.0 200[^]*CSeq: \d+ INVITE/.test(m))).toBe(false);
+        });
+
+        it("his session delegate onCancel", () => {
+          expect(invitationDelegateMock.onCancel).toHaveBeenCalledTimes(1);
         });
       });
 
@@ -1666,24 +1711,27 @@ describe("API Session", () => {
       describe("Bob progress(), Alice cancel(), Bob accept() - an async race condition (CANCEL wins)", () => {
         let logger: Logger;
         let progressResolve: boolean;
-        let acceptResolve: boolean;
+        let acceptError: unknown;
 
         beforeEach(async () => {
           progressResolve = false;
-          acceptResolve = false;
+          acceptError = undefined;
           logger = invitation.userAgent.getLogger("sip.Invitation");
           resetSpies();
           spyOn(logger, "error").and.callThrough();
-          invitation.progress().then(() => (progressResolve = true));
+          invitation
+            .progress()
+            .then(() => (progressResolve = true))
+            .catch(() => undefined);
           inviter.cancel();
-          await invitation.accept().then(() => (acceptResolve = true));
+          await invitation.accept().catch((error) => (acceptError = error));
           // await invitationStateSpy.wait(SessionState.Terminated);
           // await soon();
         });
 
-        it("his call to progress(), accept() should resolve and log an error", () => {
+        it("his call to accept() should reject with SessionTerminatedError and log an error", () => {
           expect(progressResolve).toBe(true);
-          expect(acceptResolve).toBe(true);
+          expect(acceptError instanceof SessionTerminatedError).toBe(true);
           expect(logger.error).toHaveBeenCalled();
         });
 
@@ -1726,23 +1774,27 @@ describe("API Session", () => {
       describe("Bob progress(reliable), Alice cancel(), Bob accept() - an async race condition (CANCEL wins)", () => {
         let logger: Logger;
         let progressResolve: boolean;
-        let acceptResolve: boolean;
+        let acceptError: unknown;
 
         beforeEach(async () => {
           logger = invitation.userAgent.getLogger("sip.Invitation");
           progressResolve = false;
-          acceptResolve = false;
+          acceptError = undefined;
           resetSpies();
           spyOn(logger, "error").and.callThrough();
-          invitation.progress({ rel100: true }).then(() => (progressResolve = true));
+          invitation
+            .progress({ rel100: true })
+            .then(() => (progressResolve = true))
+            .catch(() => undefined);
           inviter.cancel();
-          await invitation.accept().then(() => (acceptResolve = true));
+          await invitation.accept().catch((error) => (acceptError = error));
         });
 
-        it("his call to progress(), accept() should resolve and log an error", async () => {
+        it("his call to accept() should reject with SessionTerminatedError and log an error", async () => {
           await soon();
-          expect(progressResolve).toBe(true);
-          expect(acceptResolve).toBe(true);
+          // progress(reliable) was still waiting on its PRACK when the CANCEL won, so it rejects too.
+          expect(progressResolve).toBe(false);
+          expect(acceptError instanceof SessionTerminatedError).toBe(true);
           expect(logger.error).toHaveBeenCalled();
         });
 
