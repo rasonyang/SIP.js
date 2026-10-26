@@ -4,6 +4,8 @@
  * This module provides type definitions for BroadSoft-specific SIP extensions.
  */
 
+import { Logger } from "../../core/log/logger.js";
+
 /**
  * Call-Info header parameters for BroadSoft extensions
  */
@@ -24,7 +26,9 @@ export interface CallInfoHeader {
  */
 export enum BroadSoftEvent {
   /** Remote control event for talk/mute operations */
-  Talk = "talk"
+  Talk = "talk",
+  /** Remote control event for hold operations (Access-Side Extension) */
+  Hold = "hold"
 }
 
 /**
@@ -46,9 +50,25 @@ export interface TalkNotifyBody {
 }
 
 /**
+ * Hold event actions
+ */
+export enum HoldAction {
+  /** Place the call on hold */
+  Hold = "hold"
+}
+
+/**
+ * Parsed NOTIFY body for hold events
+ */
+export interface HoldNotifyBody {
+  event: BroadSoftEvent.Hold;
+  action: HoldAction;
+}
+
+/**
  * Type for BroadSoft NOTIFY body
  */
-export type BroadSoftNotifyBody = TalkNotifyBody;
+export type BroadSoftNotifyBody = TalkNotifyBody | HoldNotifyBody;
 
 /**
  * Options for auto-answer behavior
@@ -62,6 +82,8 @@ export interface AutoAnswerOptions {
   onAfterAutoAnswer?: () => void;
   /** Override delay (in seconds) regardless of header value */
   delayOverride?: number;
+  /** Optional logger; when provided, otherwise-silent failures (callback errors, accept rejections) are logged */
+  logger?: Logger;
 }
 
 /**
@@ -72,14 +94,8 @@ export interface RemoteControlOptions {
   enabled: boolean;
   /** Callback for talk events */
   onTalkEvent?: (action: TalkAction) => void;
-}
-
-/**
- * Complete BroadSoft extension options
- */
-export interface BroadSoftOptions {
-  /** Auto-answer configuration */
-  autoAnswer?: AutoAnswerOptions;
-  /** Remote control configuration */
-  remoteControl?: RemoteControlOptions;
+  /** Callback for hold events */
+  onHoldEvent?: (action: HoldAction) => void;
+  /** Optional logger; when provided, otherwise-silent failures (callback errors, action failures) are logged */
+  logger?: Logger;
 }
