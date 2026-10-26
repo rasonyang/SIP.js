@@ -239,7 +239,8 @@ export class Invitation extends Session {
    *
    * This method may reject for a variety of reasons including
    * the receipt of a CANCEL request before `accept` is able
-   * to construct a response.
+   * to construct a response. In that case, the promise rejects
+   * with a {@link SessionTerminatedError} and no 2xx response is sent.
    * @param options - Options bucket.
    */
   public accept(options: InvitationAcceptOptions = {}): Promise<void> {
@@ -288,6 +289,8 @@ export class Invitation extends Session {
    * Report progress to the the caller.
    * Replies to the INVITE request with a 1xx provisional response.
    * Resolves once the response sent, otherwise rejects.
+   * Rejects with a {@link SessionTerminatedError} if a CANCEL request is received
+   * before the response is sent.
    * @param options - Options bucket.
    */
   public progress(options: InvitationProgressOptions = {}): Promise<void> {
@@ -559,24 +562,19 @@ export class Invitation extends Session {
       }
     }
 
-    // FIXME: TODO:
-    // Here we are squelching the throwing of errors due to an race condition.
-    // We have an internal race between calling `accept()` and handling an incoming
-    // CANCEL request. As there is no good way currently to delegate the handling of
-    // these race errors to the caller of `accept()`, we are squelching the throwing
-    // of ALL errors when/if they occur after receiving a CANCEL to catch the ONE we know
-    // is a "normal" exceptional condition. While this is a completely reasonable approach,
-    // the decision should be left up to the library user. Furthermore, as we are eating
-    // ALL errors in this case, we are potentially (likely) hiding "real" errors which occur.
-    //
-    // Only rethrow error if the session has not been canceled.
+    // There is an internal race between calling `accept()` (or `progress()`) and handling an
+    // incoming CANCEL request. Errors which occur after a CANCEL are most often a consequence of
+    // the session terminating in the meantime, so the original error is only logged and the caller
+    // is told the session terminated before the action completed. This lets callers distinguish
+    // a lost race from a "real" failure.
     if (this.isCanceled) {
       this.logger.warn(
         "An error occurred while attempting to formulate and send a response to an incoming INVITE." +
           " However a CANCEL was received and processed while doing so which can (and often does) result" +
-          " in errors occurring as the session terminates in the meantime. Said error is being ignored."
+          " in errors occurring as the session terminates in the meantime." +
+          " Rejecting with a session terminated error."
       );
-      return;
+      throw new SessionTerminatedError();
     }
 
     throw error;

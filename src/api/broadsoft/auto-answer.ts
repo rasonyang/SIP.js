@@ -5,6 +5,7 @@
  */
 
 import { Invitation } from "../invitation.js";
+import { SessionTerminatedError } from "../exceptions/session-terminated.js";
 import { InvitationAcceptOptions } from "../invitation-accept-options.js";
 import { SessionState } from "../session-state.js";
 import { AutoAnswerOptions } from "./types.js";
@@ -128,7 +129,11 @@ export function handleAutoAnswer(
         }
       })
       .catch((error: Error) => {
-        options.logger?.error(`[BroadSoft] Auto-answer accept failed: ${error}`);
+        if (error instanceof SessionTerminatedError) {
+          options.logger?.log("[BroadSoft] Auto-answer canceled, invitation terminated before the answer was sent");
+        } else {
+          options.logger?.error(`[BroadSoft] Auto-answer accept failed: ${error}`);
+        }
       });
   }, delayMs);
 

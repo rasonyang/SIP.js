@@ -19,6 +19,7 @@ import {
 } from "../../../../lib/api/broadsoft/remote-control.js";
 import { parseCallInfoHeader } from "../../../../lib/api/broadsoft/call-info-parser.js";
 import { BroadSoftEvent, TalkAction, HoldAction } from "../../../../lib/api/broadsoft/types.js";
+import { SessionTerminatedError } from "../../../../lib/api/exceptions/session-terminated.js";
 import { Invitation } from "../../../../lib/api/invitation.js";
 import { Notification, Session, SessionState } from "../../../../lib/api/index.js";
 
@@ -375,6 +376,12 @@ describe("applyTalkAction", () => {
     const invitation = makeRingingInvitation();
     await applyTalkAction(invitation, TalkAction.Talk);
     expect(invitation.accept).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects when accept() loses the race to a CANCEL", async () => {
+    const invitation = makeRingingInvitation();
+    invitation.accept.and.returnValue(Promise.reject(new SessionTerminatedError()));
+    await expectAsync(applyTalkAction(invitation, TalkAction.Talk)).toBeRejectedWithError(SessionTerminatedError);
   });
 
   it("sends a resume re-INVITE when the session is Established", async () => {
